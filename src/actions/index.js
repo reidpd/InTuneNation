@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 export const currentNote = (note) => {
   return {
     type: 'CURRENT_NOTE',
@@ -119,3 +121,31 @@ export const pushScoreToExerciseScoresArray = (score) => {
     payload: score,
   };
 };
+
+export const fetchAllPastInstancesOfOneExercise = (userId, exId) => {
+  const API_URL = `http://api/users/${userId}/exercises/${exId}/scores`; // add url when deployed!!
+  return axios.get(API_URL).then((response) => { return response.json(); });
+};
+
+export const getAllPastInstancesOfOneExercise = (userId, exId) => {
+  const data = fetchAllPastInstancesOfOneExercise(userId, exId);
+  return {
+    type: 'GET_ALL_PAST_INSTANCES_OF_ONE_EXERCISE',
+    payload: data,
+  };
+};
+
+// router.get('/users/:userId/exercises/:exId/scores', (req, res, next) => {
+//   knex('scores')
+//     .select()
+//     .where({
+//       user_id: req.params.userId,
+//       exercises_id: req.params.exId
+//     })
+//     .then((user_scores) => {
+//       res.json(user_scores);
+//     })
+//     .catch((err) => {
+//       console.log(err);
+//     });
+// });
