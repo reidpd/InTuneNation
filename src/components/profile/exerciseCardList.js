@@ -3,13 +3,30 @@ import { bindActionCreators } from 'redux';
 // import Vex from 'vexflow';
 // import ExerciseCard from './exerciseCard';
 import { connect } from 'react-redux';
-// const VF = Vex.Flow;
+const VF = Vex.Flow;
 
 const mapStateToProps = (state) => {
   return {
     userId: state.loginReducer,
   };
 };
+
+const renderCards = (data) => {
+  return data.map((exercise) => {
+    var div = <div></div>;
+    var renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
+    renderer.resize(500, 500);
+    var context = renderer.getContext();
+    context.setFont("Arial", 10, "").setBackgroundFillStyle("#eed");
+    var stave = new VF.Stave(10, 40, 400);
+    stave.addClef("treble");
+    return (
+      <div>
+        {stave.setContext(context).draw()}
+      </div>
+    )
+  })
+}
 
 
 // // Create an SVG renderer and attach it to the DIV element named "boo".
@@ -35,7 +52,7 @@ const mapDispatchToProps = (dispatch) => { return bindActionCreators({}, dispatc
 class ExerciseCardList extends Component {
   render() {
     return (
-      <div></div>
+      {renderCards(this.props.allExercises)}
     )
   }
 }
