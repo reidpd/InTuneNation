@@ -1,27 +1,36 @@
-import React, {Component} from 'react';
-import {Thumbnail, Col, Row, Grid} from 'react-bootstrap';
+import React, { Component } from 'react';
+import { Thumbnail, Col, Row, Grid } from 'react-bootstrap';
 import C3Chart from 'react-c3js';
-import {bindActionCreators} from 'redux';
-import {connect} from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
 import 'c3/c3.css';
-import mathew from '../../assets/img/matthew.png';
+import profileImg from '../../assets/img/profile-img.png';
 import {
   loadPastExercisesData,
   postSignUp,
   postLogIn,
   renderNavBar,
   googleOauth,
-  startload
+  startload,
+  averageArr
 } from '../../actions';
 import Table from '../table/table';
-import musicNoteMusic from '../../assets/img/music-note.jpg';
 import Dropzone from 'react-dropzone';
 import request from 'superagent';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import rd3 from 'react-d3';
-import {BarChart} from 'react-d3/barchart';
+import { BarChart } from 'react-d3/barchart';
+import { noteName } from '../table/table.js'
 
-const mapStateToProps = (state, ownProps) => ({user: state.loginReducer, graphData: state.graphDataReducer,  googleOauthState: state.googleOauthReducer});
+const mapStateToProps = (state, ownProps) => ({
+  user: state.loginReducer,
+  graphData: state.graphDataReducer,
+  graphDataBarGraph: state.barGraphgraphDataReducer,
+  googleOauthState: state.googleOauthReducer,
+  list: state.dashboardReducer,
+  notesLine: state.graphDataReducer,
+  notesBar: state.barGraphgraphDataReducer
+});
 
 let profile_picture;
 
@@ -33,7 +42,8 @@ const mapDispatchToProps = (dispatch) => {
     postLogIn,
     renderNavBar,
     googleOauth,
-    startload
+    startload,
+    averageArr
   }, dispatch);
 };
 
@@ -55,48 +65,68 @@ class Profile extends Component {
     if (localStorage.getItem('profile_picture') !== "undefined") {
       profile_picture = localStorage.getItem('profile_picture').substring(0, localStorage.getItem('profile_picture').length - 2) + '200';
     } else {
-      profile_picture = mathew;
+      profile_picture = profileImg;
     }
 
-    let Obj = {
+    let obj = {
       token: token,
       id: id,
       firstName: firstName,
       lastName: lastName,
       email: email,
-      profile_picture: profile_picture.substring(0, profile_picture.length - 2) + '200',
+      profile_picture: profile_picture.substring(0, profile_picture.length - 2) + '200'
     }
-    //sending the object to the state so i can rerender the page
-    this.props.googleOauth(Obj);
-    //loading the music table
-    this.props.loadPastExercisesData(Obj.id);
+    this.props.googleOauth(obj);
+    this.props.loadPastExercisesData(obj.id);
   }
 
-  // Inserts exercise into redux
-  insertExToRedux = () => {
-
+  convertArr = (arr) => {
+    this.props.averageArr(arr);
   }
 
   graph = () => {
-    console.log('graphData===',this.props.graphData);
-    // console.log('graphDataBarGraph===', this.props.graphDataBarGraph.columns);
     if (this.props.graphData === null) {
       return <div></div>;
-    } else if (this.props.graphData.length !== 0) {
-      return <div><div className="center-warning">
+    } else if (this.props.graphData.length !== 0 && this.props.graphDataBarGraph !== null) {
+
+      return <div className="graphBackGround">
+        <div className="center-warning graphBack">
           <C3Chart data={{
             unload: true,
-            columns: this.props.graphData.columns
-          }} axis={this.props.graphData.axis}/>
+            x: 'x1',
+            columns: [
+              [
+                'x1', ...this.props.notesLine.notes
+              ],
+              ...this.props.graphData.columns
+            ]
+          }} axis={this.props.graphData.axis} title={{
+            text: 'InTuneNation Scores'
+          }}/>
         </div>
-        {/* <div className="center-warning">
+        <div className="center-warning">
           <C3Chart data={{
             unload: true,
-            columns: this.props.graphData.columns,
+            x: 'x1',
+            columns: [
+              [
+                'x1', ...this.props.notesBar.notes
+              ],
+              [
+                'Note Name', ...this.props.graphDataBarGraph.columns
+              ]
+            ],
             type: 'bar'
-          }}/> */}
-        {/* </div> */}
-       </div>
+          }} title={{
+            text: 'Average InTuneNation Scores'
+          }} bar={{
+            width: {
+              ratio: 0.5
+            }
+          }} axis={this.props.graphDataBarGraph.axis}/>
+        </div>
+
+      </div>
     } else {
       return <div className="center-warning">
         <Link to="/interface" onClick={this.insertExToRedux}>
@@ -113,12 +143,13 @@ class Profile extends Component {
 
   render() {
     return (
-        <div className="container">
+      <div id="profileBackground">
+        <div id="profile-container" className="container">
           <div className="row">
-            <div className="col-md-2 col-xs-6">
+            <div className="col-md-2 col-xs-2">
               <div className="thumbnailSection">
                 <div className="thumbnail">
-                  <img src={profile_picture} alt=".."/>
+                  <img id="profile-pic" src={profile_picture} alt=".."/>
                   <div className="caption">
                     <h3>{this.props.googleOauthState.firstName} {this.props.googleOauthState.lastName}</h3>
                   </div>
@@ -126,23 +157,33 @@ class Profile extends Component {
                 <div></div>
               </div>
             </div>
-            <div className="col-md-10 col-xs-12">
+            <div className="col-md-8 col-xs-8">
               <div className="pastExercise"></div>
               <div>
                 <Table/>
               </div>
               <br/>
             </div>
-            <div className="col-md-2 col-xs-6"></div>
+            <div className="col-md-2 col-xs-2">
+
+              <div className="popover right static-popover profile-right" id="right-pointer">
+                <div className="arrow"></div>
+                <h3 className="popover-title poptitle"> 🎶  &nbsp; 🎵 &nbsp; 🎶 </h3>
+                <div className="popover-content">
+                  <span>Click on a row to display its graph</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="row" >
-            <div className="col-md-2 col-xs-3"></div>
-            <div className="col-md-8 col-xs-12">
+          <div className="row">
+            <div className="col-md-2 col-xs-2"></div>
+            <div className="col-md-8 col-xs-8">
               {this.graph()}
             </div>
-            <div className="col-md-2 col-xs-3"></div>
+            <div className="col-md-2 col-xs-2"></div>
           </div>
         </div>
+      </div>
     );
   }
 }
